@@ -4,10 +4,10 @@ import bcrypt from "bcrypt";
 import jwt from 'jsonwebtoken';
 
  interface UserDocument extends Document {
+  _id: string;
   name: string;
   email: string;
-  phone: number;
-  password: string;
+  phone: string;
   role: "Job Seeker" | "Employer";
   createdAt: Date;
   updatedAt: Date;
@@ -18,6 +18,10 @@ import jwt from 'jsonwebtoken';
 interface UserModel extends Model<UserDocument> {}
 
 const userSchema = new Schema<UserDocument>({
+  _id: {
+    type: String,
+    required: true
+  },
   name: {
     type: String,
     required: [true, "Please provide your name!"],
@@ -30,16 +34,10 @@ const userSchema = new Schema<UserDocument>({
     validate: [validator.isEmail, "Please provide a valid email!"]
   },
   phone: {
-    type: Number,
+    type: String,
     required: [true, "Please provide phone number"]
   },
-  password: {
-    type: String,
-    required: [true, "Please provide your password!"],
-    minLength: [8, "Password must contain at least 8 characters!"],
-    maxLength: [32, "Password cannot exceed 32 characters!"],
-    select: false
-  },
+  
   role: {
     type: String,
     required: [true, "Please provide your role"],
@@ -50,22 +48,10 @@ const userSchema = new Schema<UserDocument>({
 });
 
 // Hashing the password
-userSchema.pre<UserDocument>("save", async function (next) {
-  const user = this as UserDocument;
-  if (!user.isModified("password")) {
-    return next();
-  }
- 
-    user.password = await bcrypt.hash(user.password, 10);
-    return next();
- 
-});
+
 
 // Comparing the password
-userSchema.methods.comparePassword = async function (enteredPassword: string): Promise<boolean> {
-  const user = this as UserDocument;
-  return await bcrypt.compare(enteredPassword, user.password);
-};
+
 // Generating a JWT token when a user registers or logs in
 userSchema.methods.getJWTToken = function (): string {
   const jwtSecret = process.env.JWT_SECRET_KEY || '';

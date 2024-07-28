@@ -37,8 +37,7 @@ const applicationSchema = new mongoose.Schema({
       },
       applicantID: {
         user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+          type: String,
           required: true,
         },
         role: {
@@ -49,8 +48,7 @@ const applicationSchema = new mongoose.Schema({
       },
       employerID: {
         user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+          type: String,
           required: true,
         },
         role: {

@@ -4,6 +4,7 @@ import { AuthenticatedRequest } from "../middlewares/auth.middleware.js";
 import ErrorHandler from "../utils/errorHandler.js";
 import { Job } from '../models/job.model.js';
 import { Application } from '../models/application.model.js';
+import { User } from '../models/user.model.js';
 
 interface UploadedFile {
     mimetype: string;
@@ -20,8 +21,11 @@ interface UploadedFile {
   });
   
   export const postApplication = TryCatch(async (req: AuthenticatedRequest, res, next) => {
-    const role = req.user?.role;
-    if (role === "Employer") {
+    const { name, email, coverLetter, phone, address, jobId, userId } = req.body;
+    const user = await User.findById(userId)
+   
+    
+    if (user?.role === "Employer") {
       return next(
         new ErrorHandler("Employer not allowed to access this resource.", 400)
       );
@@ -62,9 +66,11 @@ interface UploadedFile {
       return next(new ErrorHandler("Failed to upload file to Cloudinary", 500));
     }
     
-    const { name, email, coverLetter, phone, address, jobId } = req.body;
+    
+   
+    
     const applicantID = {
-      user: req.user?._id,
+      user: userId,
       role: "Job Seeker",
     };
     if (!jobId) {
@@ -112,14 +118,16 @@ interface UploadedFile {
   
 export const employerGetAllApplications = TryCatch(
     async (req:AuthenticatedRequest, res, next) => {
-      const role = req.user?.role;
-      if (role === "Job Seeker") {
+     
+     const {id} = req.params
+     const user = await User.findById(id)
+      if (user?.role === "Job Seeker") {
         return next(
           new ErrorHandler("Job Seeker not allowed to access this resource.", 400)
         );
       }
-      const  _id  = req.user?._id;
-      const applications = await Application.find({ "employerID.user": _id });
+      
+      const applications = await Application.find({ "employerID.user": user?._id });
       res.status(200).json({
         success: true,
         applications,
@@ -129,13 +137,15 @@ export const employerGetAllApplications = TryCatch(
 
   export const jobseekerGetAllApplications = TryCatch(
     async (req:AuthenticatedRequest, res, next) => {
-      const  role  = req.user?.role;
+      const userId = req.params.id
+  const user = await User.findById(userId)
+  const role = user?.role;
       if (role === "Employer") {
         return next(
           new ErrorHandler("Employer not allowed to access this resource.", 400)
         );
       }
-      const  _id  = req.user?._id;
+      const  _id  = user?._id;
       const applications = await Application.find({ "applicantID.user": _id });
       res.status(200).json({
         success: true,
@@ -146,7 +156,9 @@ export const employerGetAllApplications = TryCatch(
 
   export const jobseekerDeleteApplication = TryCatch(
     async (req:AuthenticatedRequest, res, next) => {
-      const role  = req.user?.role;
+      const userId = req.body._id
+  const user = await User.findById(userId)
+  const role = user?.role;
       if (role === "Employer") {
         return next(
           new ErrorHandler("Employer not allowed to access this resource.", 400)

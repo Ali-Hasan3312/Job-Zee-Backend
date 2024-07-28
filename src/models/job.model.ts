@@ -12,7 +12,7 @@ export interface JobDocument extends Document {
   salaryTo?: number;
   expired: boolean;
   jobPostedOn: Date;
-  postedBy: mongoose.Types.ObjectId;
+  postedBy: string;
 }
 
 const jobSchema = new Schema<JobDocument>({
@@ -26,7 +26,7 @@ const jobSchema = new Schema<JobDocument>({
     type: String,
     required: [true, "Please provide description."],
     minLength: [30, "Description must contain at least 30 Characters!"],
-    maxLength: [500, "Description cannot exceed 500 Characters!"],
+    maxLength: [5000, "Description cannot exceed 500 Characters!"],
   },
   category: {
     type: String,
@@ -69,8 +69,7 @@ const jobSchema = new Schema<JobDocument>({
     default: Date.now,
   },
   postedBy: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
+    type: String,
     required: true,
   },
 });

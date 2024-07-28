@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from "../middlewares/auth.middleware.js";
 import { TryCatch } from "../middlewares/error.middleware.js";
 import { Job } from "../models/job.model.js";
 import ErrorHandler from "../utils/errorHandler.js";
+import { User } from "../models/user.model.js";
 
 
 export const getAllJobs = TryCatch(async (req, res, next) => {
@@ -14,7 +15,9 @@ export const getAllJobs = TryCatch(async (req, res, next) => {
 
   });
 export const postJob = TryCatch(async(req:AuthenticatedRequest,res,next)=>{
-    const role = req.user?.role;
+  const userId = req.params.id
+  const user = await User.findById(userId)
+  const role = user?.role;
     if(role === "Job Seeker"){
         return next(
             new ErrorHandler("Job Seeker not allowed to access this resource.", 400)
@@ -49,7 +52,7 @@ export const postJob = TryCatch(async(req:AuthenticatedRequest,res,next)=>{
         );
       }
 
-      const postedBy = req.user?._id;  
+      const postedBy = user?._id;  
   const job = await Job.create({
     title,
     description,
@@ -70,14 +73,16 @@ export const postJob = TryCatch(async(req:AuthenticatedRequest,res,next)=>{
     
 });
 export const getMyJob = TryCatch(async(req:AuthenticatedRequest,res,next)=>{
-  const role = req.user?.role;
+  const userId = req.params.id
+  const user = await User.findById(userId)
+  const role = user?.role;
   if(role === "Job Seeker"){
     return next(
       new ErrorHandler("Job Seeker not allowed to access this resource.", 400)
     );
   }
   
-  const myJobs = await Job.find({postedBy: req.user?._id});
+  const myJobs = await Job.find({postedBy: user?._id});
  return res.status(201).json({
     success: true,
     myJobs,
@@ -85,12 +90,7 @@ export const getMyJob = TryCatch(async(req:AuthenticatedRequest,res,next)=>{
 });
 
 export const updateJob = TryCatch(async(req:AuthenticatedRequest,res,next)=>{
-  const role  = req.user?.role;
-  if (role === "Job Seeker") {
-    return next(
-      new ErrorHandler("Job Seeker not allowed to access this resource.", 400)
-    );
-  }
+ 
   const { id } = req.params;
   let job = await Job.findById(id);
   if (!job) {
@@ -107,12 +107,7 @@ export const updateJob = TryCatch(async(req:AuthenticatedRequest,res,next)=>{
   });
 });
 export const deleteJob = TryCatch(async (req:AuthenticatedRequest, res, next) => {
-  const role  = req.user?.role;
-  if (role === "Job Seeker") {
-    return next(
-      new ErrorHandler("Job Seeker not allowed to access this resource.", 400)
-    );
-  }
+ 
   const { id } = req.params;
   const job = await Job.findById(id);
   if (!job) {
